@@ -2,3 +2,11 @@ data/
 __pycache__/
 *.log
 .DS_Store
+.aider*
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.pdf
+*.synctex.gz
+*.toc

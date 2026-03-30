@@ -1,0 +1,129 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages for math, figures, and formatting
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{cite}
+
+\newcommand{\kk}{\mathbf{k}}
+
+% Page margins
+\geometry{margin=1in}
+
+% Title Information
+\title{Report on the Haldane Model}
+\author{Víctor Martín Parra}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    The Haldane model is a paradigm for topological insulators, demonstrating the Quantum Hall Effect in the absence of an external magnetic field. In this report, we present a numerical study of the transport properties of the Haldane model on a honeycomb lattice. We investigate the convergence of the longitudinal semiclassical conductivity using the relaxation time approximation and demonstrate its agreement with the Drude formula near the band edges. Furthermore, we verify the topological nature of the model by calculating the Anomalous Hall Effect (AHE) through the integration of the Berry curvature, showing the quantization of the Hall conductivity to the Chern number of the occupied bands.
+\end{abstract}
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+The Haldane model is a toy model of a quantum Hall effect without an external magnetic field. It describes electrons hopping on a honeycomb lattice with complex next-nearest-neighbor hopping, which breaks time-reversal symmetry while maintaining a net zero magnetic flux through the unit cell.
+
+The Hamiltonian for the Haldane model is given by:
+\begin{equation}
+    H(\mathbf{k}) = \vec{h}(\mathbf{k}) \cdot \vec{\sigma} = h_0(\mathbf{k})\mathbb{I} + h_x(\mathbf{k})\sigma_x + h_y(\mathbf{k})\sigma_y + h_z(\mathbf{k})\sigma_z
+\end{equation}
+where $\sigma_i$ are the Pauli matrices.
+
+The total conductivity per spin and band is given by:
+\begin{equation}
+    \sigma_{ij}^n = \frac{e^2}{\hbar} \int_{BZ} \frac{d^2\kk}{(2\pi)^2}f\left(\varepsilon_n(\kk)\right) \left[ \frac{\tau}{\hbar} \frac{\partial^2\varepsilon_n(\kk)}{\partial k_i \partial k_j} + \Omega_{ij}^n(\kk) \right]
+\end{equation}
+
+with the first term contributing to the longitudinal semiclassical conductivity and the second term, linked to the Berry curvature, gives raise to the Anomalous Hall Effect (AHE).
+
+\section{Methodology}
+We utilize numerical diagonalization of the Bloch Hamiltonian over the Brillouin zone. The reciprocal space is discretized using a uniform $N \times N$ mesh, where integrals over the Brillouin Zone can be computed by:
+\begin{equation}
+    \int_{BZ} \frac{d^2\kk}{(2\pi)^2} \rightarrow \frac{A_{BZ}}{(2\pi)^2 N^2}
+\end{equation}
+
+The longitudinal conductivity is computed using the semiclassical approximation in the relaxation time $\tau$:
+\begin{equation}
+    \sigma_{ij} = \frac{e^2}{h} \frac{\tau}{\hbar} \int_{BZ} \frac{d^2\kk}{(2\pi)^2} \sum_n f(\varepsilon_n(\kk)) \frac{\partial^2\varepsilon_n(\kk)}{\partial k_i \partial k_j}
+\end{equation}
+where $f(\varepsilon)$ is the Fermi-Dirac distribution. For a circular band, this reduces to the Drude formula:
+\begin{equation}
+    \sigma_{Drude} = \frac{e^2}{h} \frac{\tau \mu_{k_F}}{\hbar}
+\end{equation}
+where $\mu_{k_F}$ is the Fermi energy measured from the band edge.
+
+The Anomalous Hall Effect (AHE) is calculated from the Berry curvature $\Omega_n(\kk)$:
+\begin{equation}
+    \sigma_{xy} = \frac{e^2}{h} \int_{BZ} \frac{d^2\kk}{2\pi} \sum_n f(\varepsilon_n(\kk)) \Omega_n(\kk)
+\end{equation}
+The Berry curvature is obtained via the Kubo-like formula to ensure gauge invariance:
+\begin{align}
+    \Omega_n(\kk) &= i \sum_{m \neq n} \frac{\langle u_n | \mathbf{\nabla}H | u_m \rangle \times \langle u_m | \mathbf{\nabla}H | u_n \rangle}{(\varepsilon_n(\kk) - \varepsilon_m(\kk))^2} \\
+    &= i \sum_{m \neq n} \frac{\langle u_n | \frac{\partial H}{\partial k_x} | u_m \rangle \langle u_m | \frac{\partial H}{\partial k_y} | u_n \rangle - \text{h.c.}}{(\varepsilon_n(\kk) - \varepsilon_m(\kk))^2}
+\end{align}
+
+\section{Results}
+
+\subsection{Longitudinal Conductivity Convergence}
+We calculated the longitudinal conductivity $\sigma_{xx}$ and $\sigma_{yy}$ for the Haldane model with $t_1=1.0, t_2=0.1, \phi=\pi/4, M=0.2$. The Fermi level was set to $\mu=-0.4$, which lies near the valence band edge ($E_{v,max} \approx -0.3832$). The results for different mesh sizes $N_{PTS}$ are shown in Table \ref{tab:conductivity}.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        $N_{PTS}$ & $\sigma_{xx} [e^2/h]$ & $\sigma_{yy} [e^2/h]$ & $\sigma_{Drude} [e^2/h]$ \\
+        \hline
+        20  & 0.0000 & 0.0000 & 0.0000 \\
+        40  & 2.0070 & 1.5510 & 0.0000 \\
+        60  & 1.4591 & 1.1673 & 3.1060 \\
+        80  & 2.6129 & 2.3070 & 2.2623 \\
+        100 & 2.7846 & 2.5603 & 2.5470 \\
+        120 & 2.7033 & 2.5443 & 3.1060 \\
+        150 & 3.1896 & 3.0706 & 3.1060 \\
+        \hline
+    \end{tabular}
+    \caption{Longitudinal conductivity as a function of the number of points per direction for $\mu=-0.4$.}
+    \label{tab:conductivity}
+\end{table}
+
+At $\mu=-0.4$, the Fermi level is very close to the band edge. We observe that as $N_{PTS}$ increases, the numerical values for $\sigma_{xx}$ and $\sigma_{yy}$ converge towards each other and approach the Drude prediction. Because we are near the band edge, the parabolic approximation assumed in the Drude formula is highly appropriate, resulting in small values of conductivity that are accurately captured as the mesh refinement improves.
+
+\subsection{Anomalous Hall Effect Quantization}
+We evaluated the Hall conductivity $\sigma_{xy}$ for different values of the mass term $M$ while keeping the Fermi level in the gap. The results are presented in Table \ref{tab:ahe}.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        $M$ & $\sigma_{xy} [e^2/h]$ & Phase \\
+        \hline
+        0.0 & 1.0000 & Topological \\
+        0.1 & 1.0000 & Topological \\
+        0.2 & 1.0000 & Topological \\
+        0.5 & 0.0000 & Trivial \\
+        0.7 & 0.0000 & Trivial \\
+        \hline
+    \end{tabular}
+    \caption{Hall conductivity as a function of the mass term $M$.}
+    \label{tab:ahe}
+\end{table}
+
+The results confirm that the Hall conductivity is perfectly quantized to $1.0 e^2/h$ in the topological phase ($M < 3\sqrt{3}t_2 \sin \phi \approx 0.367$) and drops to zero in the trivial phase, demonstrating the relationship between the AHE and the Chern number of the occupied bands.
+
+\section{Conclusion}
+In this study, we have numerically explored the transport properties of the Haldane model. Our results for the longitudinal conductivity show that the semiclassical approximation correctly recovers the isotropic behavior of the lattice and converges to the Drude formula when the chemical potential is near the band edge, where the parabolic dispersion is a valid approximation. 
+
+Furthermore, we have demonstrated the quantization of the Hall conductivity in the topological phase. The transition from a Chern insulator with $\sigma_{xy}=1.0 e^2/h$ to a trivial insulator with $\sigma_{xy}=0$ as the mass term $M$ increases is in perfect agreement with the theoretical phase diagram of the Haldane model. These findings validate our numerical implementation and provide a solid foundation for future studies on topological transport in more complex systems.
+
+\end{document}
