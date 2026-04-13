@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 # Add project root to path
@@ -7,7 +8,7 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
 from tools.model import HaldaneSystem
-from tools.analysis import calculate_conductivity
+from tools.analysis import get_conductivity_FS
 
 # -------------------- CONFIGURATION ------------------------
 
@@ -41,23 +42,33 @@ FOLDER_FIGS = "figures"
 # -----------------------------------------------------------
 
 def main():
-    print("--- Building The System ---")
-    # Build the simulation
-    system = HaldaneSystem(t1, t2, phi, M)
+    # e_vals = np.linspace(-1, 1, 50)
+
+    # df_de = deriv_fermi_distrib(e_vals, mu_eff, T_eff)
+
+    # plt.figure()
     
+    # plt.plot(e_vals, df_de, label="Fermi distribution's derivative")
+    # plt.axvline(mu_eff, linestyle=':', label='Fermi level')
+    # plt.ylabel('df/dE')
+    # plt.xlabel('Energy')
+    # plt.legend()
+    # plt.show()
+
+    # Build the system
+    system = HaldaneSystem(t1, t2, phi, M)
+
     # Calculate conductivity
     print(f"Calculating the conductivity for mu = {mu_eff:.2f} ...")
-    sigma_tensor, sigma_per_band = calculate_conductivity(system, T_eff, mu_eff, tau_eff, N_PTS)
+    sigma_tensor = get_conductivity_FS(system, T_eff, mu_eff, tau_eff, N_PTS)
     
     print("End of calculation")
 
-    # print(f"sigma per band: {sigma_per_band}")
-
-    # print(f"Conductivity tensor = \n{sigma_tensor}")
     print(f"sigma_xx = {sigma_tensor[0,0]:.4f} e^2/h")
     print(f"sigma_xy = {sigma_tensor[0,1]:.4f} e^2/h")
     print(f"sigma_yx = {sigma_tensor[1,0]:.4f} e^2/h")
     print(f"sigma_yy = {sigma_tensor[1,1]:.4f} e^2/h")
+
 
 if __name__ == "__main__":
     main()

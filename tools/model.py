@@ -8,13 +8,13 @@ class HaldaneSystem:
 
         Parameters:
         -----------
-        t1 : int
+        t1 : float
             1st neihgbor hopping
-        t2 : int
+        t2 : float
             2nd neighbor hooping
-        phi : int
+        phi : float
             Magnetic flux associated to t2
-        M : int
+        M : float
             on-site (mass) energy
         """
 

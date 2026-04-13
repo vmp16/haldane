@@ -26,6 +26,31 @@ def fermi_distrib(E, mu_eff, T_eff):
     x_clipped = np.clip(x, -700, 700)
     return 1 / (1 + np.exp(x_clipped))
 
+def deriv_fermi_distrib(E, mu_eff, T_eff):
+    """
+    Returns the derivative of the Fermi distribution with respect to the energy.
+
+    Parameters
+    ----------
+    E : float
+        Energy in t1 units
+    mu_eff : float
+        Fermi level in t1 units
+    T_eff : float
+        Scalated temperature (kB * T_real / t1)
+
+    Returns
+    ----------
+    df_dE(E, T, mu) : float
+        Corresponding value of the Fermi distribution's derivative.
+    """
+    x = (E - mu_eff) / T_eff
+    # Avoid overflow in exp by clipping x
+    x_clipped = np.clip(x, -700, 700)
+
+    return - (fermi_distrib(E, mu_eff, T_eff))**2 * np.exp(x_clipped) / T_eff
+
+
 def grad_hexa(f, system):
     """
     Calculates the gradient of f in hexagonal coordinates.
@@ -187,6 +212,77 @@ def calculate_conductivity(system, T_eff, mu_eff, tau_eff, N_PTS=60):
         sigma_per_band.append(band_tensor)
 
     return sigma_tensor, sigma_per_band
+
+def get_conductivity_FS(system, T_eff, mu_eff, tau_eff, N_PTS=60):
+    """
+    Calculate the conductivity tensor in the relaxation time approximation
+    using the semiclassical description and integrating over the Fermi Surface.
+    
+    Parameters
+    ----------
+    system : HaldaneSystem
+        The system with tight-binding parameters
+    T_eff : float
+        Scaled temperature (kB * T_real / t1)
+    mu_eff : float
+        Scaled chemical potential (mu / t1)
+    tau_eff : float
+        Scaled relaxation time (tau_real / h * t1)
+    N_PTS : int
+        Number of k-points per direction in the Brillouin zone mesh
+        
+    Returns
+    -------
+    sigma : ndarray
+        Conductivity tensor (2x2) in units of e^2/h
+    """
+    # Generate the grid over the Brillouin Zone if not already done
+    if not hasattr(system, 'k_mesh'):
+        kx, ky = system.generate_k_mesh(n_pts=N_PTS)
+    
+    area_bz = system.area_bz
+
+    # Calculate the energy bands in the k-grid if not already done
+    if system.energies is None:
+        energies, eigenstates = system.solve_at_k(system.k_mesh)
+    else:
+        energies = system.energies
+    
+    prefactor = (tau_eff * area_bz) / (N_PTS * N_PTS)
+
+    sigma_xx_list = []
+    sigma_xy_list = []
+    sigma_yx_list = []
+    sigma_yy_list = []
+
+    for n in range(energies.shape[-1]):
+        band_E = energies[..., n]
+        
+        # Compute the derivatives of the energy band in hexagonal coordinates
+        deriv_cart = grad_cart(band_E, system)
+
+        dE_dx = deriv_cart[0, ...]
+        dE_dy = deriv_cart[1, ...]
+
+        df_dE = deriv_fermi_distrib(band_E, mu_eff, T_eff)
+        integral_xx = np.sum(-df_dE * dE_dx * dE_dx)
+        integral_xy = np.sum(-df_dE * dE_dx * dE_dy)
+        integral_yx = np.sum(-df_dE * dE_dy * dE_dx)
+        integral_yy = np.sum(-df_dE * dE_dy * dE_dy)
+
+        sigma_xx_list.append(prefactor * integral_xx)
+        sigma_xy_list.append(prefactor * integral_xy)
+        sigma_yx_list.append(prefactor * integral_yx)
+        sigma_yy_list.append(prefactor * integral_yy)
+
+    sigma_xx = np.sum(sigma_xx_list)
+    sigma_xy = np.sum(sigma_xy_list)
+    sigma_yx = np.sum(sigma_yx_list)
+    sigma_yy = np.sum(sigma_yy_list)
+
+    sigma_tensor = np.array([[sigma_xx, sigma_xy], [sigma_yx, sigma_yy]])
+
+    return sigma_tensor
 
 # ----- DOES NOT WORK, DERIVATES NUMERICALLY THE WAVE FUNCTIONS -----
 # def calculate_berry_curv(system, N_PTS=50):
